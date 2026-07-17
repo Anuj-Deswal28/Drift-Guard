@@ -30,5 +30,6 @@ if __name__ == "__main__":
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM requests LIMIT 3")
+    print("Insertion successful")
     print(cursor.fetchall())
     conn.close()
