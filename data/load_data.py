@@ -17,5 +17,3 @@ def load_data():
     x_test = x_test.fillna(train_mean)
     
     return x_train,x_test,y_train,y_test
-
-x,y,z,f = load_data()
