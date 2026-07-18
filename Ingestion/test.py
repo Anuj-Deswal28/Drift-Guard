@@ -5,5 +5,8 @@ DB_PATH = Path(__file__).parent.parent / "data" / "driftguard.db"  # adjust base
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 cursor.execute("SELECT COUNT(*) FROM requests")
-print(cursor.fetchone())
+print("Total rows:", cursor.fetchone())
+cursor.execute("SELECT Prediction, true_lable FROM requests LIMIT 10")
+print(cursor.fetchall())
+
 conn.close()

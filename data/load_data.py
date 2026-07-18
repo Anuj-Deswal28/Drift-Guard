@@ -11,7 +11,7 @@ def load_data():
     y_data = y_data.map({"Yes": 1, "No": 0})
 
 
-    x_train, x_test, y_train, y_test =train_test_split(x_data,y_data, test_size= 0.1, random_state=32)
+    x_train, x_test, y_train, y_test =train_test_split(x_data,y_data, test_size= 0.25, random_state=32)
     train_mean = x_train.mean()
     x_train = x_train.fillna(train_mean)
     x_test = x_test.fillna(train_mean)

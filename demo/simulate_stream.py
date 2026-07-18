@@ -12,9 +12,10 @@ def generate_random_datetime(start_date,day):
 start = datetime(2026, 1, 1)
 
 
-x,y,z,f = load_data()
+x_train,x_test,y_train,y_test = load_data()
 
-data = x.sample(n=2000,replace=True)
+data = x_test.sample(n=2000,replace=True)
+y_test = y_test.loc[data.index]
 
 time_stamps =[]
 for i in range(2000):
@@ -29,12 +30,14 @@ feature_columns = [
     "Collateral_Value", "Loan_Amount", "Loan_Term"
 ]
 mod1 = train_model()
-for i, row in data.iterrows():
+for position, (i, row) in enumerate(data.iterrows()):
     row_df = row[feature_columns].to_frame().T  
 
     prediction = int(mod1.pred(row_df)[0])
     probability = float(mod1.pred_prob(row_df)[0][1])
 
     features_dict = row[feature_columns].to_dict()
+    
+    true_label =int(y_test.iloc[position])
 
-    log_request(features_dict, prediction, probability, row["time_stamp"].strftime('%Y-%m-%d %H:%M:%S'))
+    log_request(features_dict, prediction, probability, row["time_stamp"].strftime('%Y-%m-%d %H:%M:%S'), true_label)
