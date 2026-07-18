@@ -46,13 +46,28 @@ def ks_test(base_feature_data, comparison_feature_data):
     ks_statistic, p_value = ks_2samp(base_feature_data, comparison_feature_data)  
     return ks_statistic, p_value  
 
+def compute_all_feature_ks(baseline_start, baseline_end, comparison_start, comparison_end):
+    feature_columns = [
+        "Applicant_Income", "Coapplicant_Income", "Age", "Dependents",
+        "Credit_Score", "Existing_Loans", "DTI_Ratio", "Savings",
+        "Collateral_Value", "Loan_Amount", "Loan_Term"
+    ]
+    
+    ks_scores = {}
+    
+    for feature in feature_columns:
+        
+        base_data = get_feature_data(feature, baseline_start, baseline_end)
+        comparison_data = get_feature_data(feature, comparison_start, comparison_end)
+        
+        statistic , p_value = ks_test(base_data, comparison_data) 
+        ks_scores[feature] = {"statistic": statistic, "p_value": p_value}
+    
+    return ks_scores
+    
+
+
 
 if __name__ == "__main__":
-
-    np.random.seed(42)
-    baseline = pd.Series(np.random.normal(loc=50, scale=10, size=500))
-    no_drift = pd.Series(np.random.normal(loc=50, scale=10, size=200))
-    drifted  = pd.Series(np.random.normal(loc=80, scale=10, size=200))
-
-    print("KS (no real drift):", ks_test(baseline, no_drift))
-    print("KS (real drift):", ks_test(baseline, drifted))
+    ks_scores = compute_all_feature_ks("2026-01-01", "2026-01-04", "2026-01-06", "2026-01-07")
+    print(ks_scores)
