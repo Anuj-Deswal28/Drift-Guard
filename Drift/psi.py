@@ -69,5 +69,6 @@ def compute_all_feature_ks(baseline_start, baseline_end, comparison_start, compa
 
 
 if __name__ == "__main__":
+    print("sample testing")
     ks_scores = compute_all_feature_ks("2026-01-01", "2026-01-04", "2026-01-06", "2026-01-07")
     print(ks_scores)
