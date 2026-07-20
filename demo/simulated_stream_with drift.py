@@ -1,4 +1,3 @@
-import pandas as pd
 import random
 from datetime import datetime, timedelta
 from data.load_data import load_data
