@@ -30,12 +30,11 @@ def get_drift_timeseries(baseline_start, baseline_end, day_starts, day_ends):
             
     return drift_series
 
-def get_time_series():
-    
+def get_time_series(start_day=3, end_day=9):
     start_anchor = datetime(2026, 1, 1)
 
-    day_starts = [(start_anchor + timedelta(days=d)).strftime('%Y-%m-%d') for d in range(3, 10)]
-    day_ends = [(start_anchor + timedelta(days=d+1)).strftime('%Y-%m-%d') for d in range(3, 10)]
+    day_starts = [(start_anchor + timedelta(days=d)).strftime('%Y-%m-%d') for d in range(start_day, end_day + 1)]
+    day_ends = [(start_anchor + timedelta(days=d+1)).strftime('%Y-%m-%d') for d in range(start_day, end_day + 1)]
 
     return day_starts, day_ends
 
