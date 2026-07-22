@@ -4,8 +4,6 @@
 
 Most ML monitoring only tracks system uptime and latency, not decision quality. Models silently degrade as input data drifts and user behavior shifts, often going unnoticed for weeks. DriftGuard detects feature-level data drift, tracks live performance decay, and surfaces root-cause hints — turning a generic "something broke" alert into an actionable diagnostic.
 
-![Dashboard preview](docs/dashboard_preview.png)
-
 ---
 
 ## The problem, demonstrated
