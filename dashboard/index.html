@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DriftGuard — Model Monitoring</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --text: #1a1a1a;
+      --text-muted: #6b7280;
+      --accent: #2563eb;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --danger-border: #fca5a5;
+      --ok: #93c5fd;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 32px 24px 64px;
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      max-width: 640px;
+    }
+
+    .demo-note {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #92400e;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .alert {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      color: #991b1b;
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .alert.visible {
+      display: block;
+    }
+
+    .alert strong {
+      font-weight: 700;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      margin-bottom: 16px;
+    }
+
+    .card-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0 0 2px;
+      color: var(--text);
+    }
+
+    .card-header .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    canvas {
+      max-height: 280px;
+    }
+
+    footer {
+      margin-top: 32px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <header>
+      <h1>DriftGuard</h1>
+      <p>Continuous monitoring for production ML models — tracking feature drift, performance decay, and which drifted feature is most likely responsible.</p>
+      <span class="demo-note">Demo data — Credit_Score drift injected on days 8–10</span>
+    </header>
+
+    <div id="alertBanner" class="alert"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Accuracy Over Time</h2>
+        <div class="subtitle">Rolling daily accuracy, days 1–10</div>
+      </div>
+      <canvas id="performanceChart"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Drift Score (PSI) per Feature</h2>
+        <div class="subtitle">Day 8 vs. baseline (days 1–3)</div>
+      </div>
+      <canvas id="driftChart"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Root Cause Ranking</h2>
+        <div class="subtitle">Correlation between each feature's drift and the performance drop, across days 4–10</div>
+      </div>
+      <canvas id="rootCauseChart"></canvas>
+    </div>
+
+    <footer>DriftGuard v1 — feature-level drift detection, performance tracking, and root-cause correlation for tabular ML models.</footer>
+
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const BASELINE_START = "2026-01-01";
+    const BASELINE_END = "2026-01-04";
+    const COMPARISON_START = "2026-01-09";
+    const COMPARISON_END = "2026-01-10";
+
+    Chart.defaults.font.family = "-apple-system, 'Segoe UI', system-ui, sans-serif";
+    Chart.defaults.color = "#6b7280";
+
+    async function loadPerformanceChart() {
+      const response = await fetch(
+        `${API_BASE}/performance/timeseries?baseline_start=${BASELINE_START}&baseline_end=${BASELINE_END}`
+      );
+      const data = await response.json();
+
+      const labels = data.map(point => point.start);
+      const accuracyValues = data.map(point => point.accuracy);
+
+      new Chart(document.getElementById('performanceChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Accuracy',
+            data: accuracyValues,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.08)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointBackgroundColor: '#2563eb',
+            tension: 0.25,
+            fill: true
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { min: 0, max: 1, grid: { color: '#f0f1f3' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    async function loadDriftChart() {
+      const response = await fetch(
+        `${API_BASE}/drift?baseline_start=${BASELINE_START}&baseline_end=${BASELINE_END}&comparison_start=${COMPARISON_START}&comparison_end=${COMPARISON_END}`
+      );
+      const data = await response.json();
+
+      const featureNames = Object.keys(data.psi);
+      const psiValues = Object.values(data.psi);
+
+      new Chart(document.getElementById('driftChart'), {
+        type: 'bar',
+        data: {
+          labels: featureNames,
+          datasets: [{
+            label: 'PSI Score',
+            data: psiValues,
+            backgroundColor: featureNames.map(f => f === 'Credit_Score' ? '#dc2626' : '#93c5fd'),
+            borderRadius: 4
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f0f1f3' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    async function loadRootCauseChart() {
+      const response = await fetch(
+        `${API_BASE}/rootcause?baseline_start=${BASELINE_START}&baseline_end=${BASELINE_END}`
+      );
+      const data = await response.json();
+
+      const featureNames = data.map(item => item.feature);
+      const correlations = data.map(item => item.correlation);
+
+      new Chart(document.getElementById('rootCauseChart'), {
+        type: 'bar',
+        data: {
+          labels: featureNames,
+          datasets: [{
+            label: 'Correlation with Performance Drop',
+            data: correlations,
+            backgroundColor: featureNames.map(f => f === 'Credit_Score' ? '#dc2626' : '#93c5fd'),
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { min: -1, max: 1, grid: { color: '#f0f1f3' } },
+            y: { grid: { display: false } }
+          }
+        }
+      });
+
+      const topFeature = data[0];
+      const banner = document.getElementById('alertBanner');
+      if (topFeature && topFeature.correlation < -0.5 && topFeature.p_value < 0.05) {
+        banner.classList.add('visible');
+        banner.innerHTML =
+          `⚠️ Drift detected: <strong>${topFeature.feature}</strong> is the likely root cause of the performance drop ` +
+          `(correlation: ${topFeature.correlation.toFixed(2)}, p-value: ${topFeature.p_value.toFixed(4)})`;
+      }
+    }
+
+    loadPerformanceChart();
+    loadDriftChart();
+    loadRootCauseChart();
+  </script>
+</body>
+</html>

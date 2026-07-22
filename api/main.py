@@ -3,9 +3,17 @@ from performance.metrics import compute_performance_report
 from root_cause.correlation import generate_root_cause_report
 from root_cause.correlation import generate_root_cause_report, get_time_series, get_drift_timeseries, get_performance_timeseries
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/performance/timeseries")
